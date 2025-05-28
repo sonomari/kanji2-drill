@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漢字ドリル - 手書き練習</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', Meiryo, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            height: auto;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: visible;
+            min-height: auto;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .drill-container {
+            padding: 40px;
+        }
+        
+        .problem-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4facfe;
+        }
+        
+        .problem-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .problem-number {
+            background: #4facfe;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .score {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+        }
+        
+        .reading-section {
+            margin-bottom: 30px;
+        }
+        
+        .reading-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .reading-text {
+            font-size: 1.3em;
+            margin-right: 20px;
+            min-width: 200px;
+        }
+        
+        .answer-box {
+            position: relative;
+            border: 3px dashed #ddd;
+            background: #fff;
+            border-radius: 10px;
+            margin-right: 20px;
+            overflow: hidden;
+        }
+        
+        .writing-canvas {
+            display: block;
+            cursor: crosshair;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23e0e0e0" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)" /></svg>');
+        }
+        
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        
+        .clear-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .check-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 20px 0;
+        }
+        
+        .check-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .correct {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .control-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .stroke-width-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stroke-slider {
+            width: 100px;
+        }
+        
+        @media (max-width: 768px) {
+            .drill-container {
+                padding: 20px;
+            }
+            
+            .reading-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 2em;
+            font-weight: bold;
+            z-index: 1000;
+            animation: bounce 0.5s ease-in-out;
+            display: none;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translate(-50%, -50%) translateY(0);
+            }
+            40% {
+                transform: translate(-50%, -50%) translateY(-30px);
+            }
+            60% {
+                transform: translate(-50%, -50%) translateY(-15px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖌️ 漢字ドリル 🖌️</h1>
+            <p>手書きで漢字を練習しよう！</p>
+        </div>
+        
+        <div class="drill-container">
+            <div class="problem-section">
+                <div class="problem-header">
+                    <div class="problem-number">問題 1</div>
+                    <div class="score">正解数: <span id="score">0</span>/4</div>
+                </div>
+                
+                <div class="controls">
+                    <div class="stroke-width-control">
+                        <label>筆の太さ:</label>
+                        <input type="range" id="strokeWidth" class="stroke-slider" min="2" max="10" value="4">
+                        <span id="strokeValue">4px</span>
+                    </div>
+                    <button class="control-btn" onclick="clearAllCanvases()">全て消去</button>
+                </div>
+                
+                <div class="reading-section">
+                    <div class="reading-item">
+                        <div class="reading-text">①あさがお ➜ あさ<span style="color: #ff6b6b; text-decoration: underline;">●</span></span>
+                        <div class="answer-box">
+                            <canvas class="writing-canvas" width="100" height="100" data-answer="顔"></canvas>
+                        </div>
+                        <button class="clear-btn" onclick="clearCanvas(this)">消去</button>
+                        <div class="result" id="result1"></div>
+                    </div>
+                    
+                    <div class="reading-item">
+                        <div class="reading-text">②きょう ➜ <span style="color: #ff6b6b; text-decoration: underline;">●</span>日</span>
+                        <div class="answer-box">
+                            <canvas class="writing-canvas" width="100" height="100" data-answer="今"></canvas>
+                        </div>
+                        <button class="clear-btn" onclick="clearCanvas(this)">消去</button>
+                        <div class="result" id="result2"></div>
+                    </div>
+                    
+                    <div class="reading-item">
+                        <div class="reading-text">③はなしをあう ➜ はなしを<span style="color: #ff6b6b; text-decoration: underline;">●</span>う</span>
+                        <div class="answer-box">
+                            <canvas class="writing-canvas" width="100" height="100" data-answer="聞"></canvas>
+                        </div>
+                        <button class="clear-btn" onclick="clearCanvas(this)">消去</button>
+                        <div class="result" id="result3"></div>
+                    </div>
+                    
+                    <div class="reading-item">
+                        <div class="reading-text">④がっこうにいく ➜ <span style="color: #ff6b6b; text-decoration: underline;">●</span>っこうにいく</span>
+                        <div class="answer-box">
+                            <canvas class="writing-canvas" width="100" height="100" data-answer="学"></canvas>
+                        </div>
+                        <button class="clear-btn" onclick="clearCanvas(this)">消去</button>
+                        <div class="result" id="result4"></div>
+                    </div>
+                </div>
+                
+                <button class="check-btn" onclick="checkAnswers()">答え合わせ</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration">🎉 よくできました！ 🎉</div>
+    
+    <script>
+        // 手書き機能の実装
+        let isDrawing = false;
+        let currentStrokeWidth = 4;
+        
+        // 正解の漢字（実際のアプリでは画像認識APIなどを使用）
+        const answers = {
+            'result1': '顔',
+            'result2': '今', 
+            'result3': '聞',
+            'result4': '学'
+        };
+        
+        // ストローク幅の制御
+        const strokeSlider = document.getElementById('strokeWidth');
+        const strokeValue = document.getElementById('strokeValue');
+        
+        strokeSlider.addEventListener('input', function() {
+            currentStrokeWidth = this.value;
+            strokeValue.textContent = this.value + 'px';
+        });
+        
+        // 各キャンバスに手書き機能を追加
+        document.querySelectorAll('.writing-canvas').forEach(canvas => {
+            const ctx = canvas.getContext('2d');
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            // マウス/タッチイベント
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // タッチイベント（iPad対応）
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            function startDrawing(e) {
+                isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+            
+            function draw(e) {
+                if (!isDrawing) return;
+                
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                
+                ctx.lineWidth = currentStrokeWidth;
+                ctx.strokeStyle = '#333';
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+            
+            function stopDrawing() {
+                isDrawing = false;
+            }
+            
+            function handleTouch(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                                e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }
+        });
+        
+        function clearCanvas(button) {
+            const canvas = button.parentNode.querySelector('.writing-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 結果をクリア
+            const resultDiv = button.parentNode.querySelector('.result');
+            if (resultDiv) {
+                resultDiv.textContent = '';
+                resultDiv.className = 'result';
+            }
+        }
+        
+        function clearAllCanvases() {
+            document.querySelectorAll('.writing-canvas').forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+            
+            // すべての結果をクリア
+            document.querySelectorAll('.result').forEach(result => {
+                result.textContent = '';
+                result.className = 'result';
+            });
+            
+            updateScore();
+        }
+        
+        function checkAnswers() {
+            let correctCount = 0;
+            
+            document.querySelectorAll('.writing-canvas').forEach((canvas, index) => {
+                const resultId = 'result' + (index + 1);
+                const resultDiv = document.getElementById(resultId);
+                const correctAnswer = canvas.dataset.answer;
+                
+                // 実際のアプリでは、ここで手書き文字認識APIを呼び出します
+                // 今回はデモとして、キャンバスに何か描かれているかをチェック
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const hasDrawing = imageData.data.some((pixel, i) => i % 4 === 3 && pixel > 0);
+                
+                if (hasDrawing) {
+                    // デモ用：ランダムに正解/不正解を決定（実際は文字認識結果）
+                    const isCorrect = Math.random() > 0.2; // 80%の確率で正解（優しめ設定）
+                    
+                    if (isCorrect) {
+                        resultDiv.textContent = '✅ 正解！';
+                        resultDiv.className = 'result correct';
+                        correctCount++;
+                    } else {
+                        resultDiv.textContent = `❌ 不正解 (正解: ${correctAnswer})`;
+                        resultDiv.className = 'result incorrect';
+                    }
+                } else {
+                    resultDiv.textContent = '📝 まだ書かれていません';
+                    resultDiv.className = 'result';
+                }
+            });
+            
+            updateScore();
+            
+            // 全問正解の場合の祝福表示
+            if (correctCount === 4) {
+                showCelebration();
+            }
+        }
+        
+        function updateScore() {
+            const correctAnswers = document.querySelectorAll('.result.correct').length;
+            document.getElementById('score').textContent = correctAnswers;
+        }
+        
+        function showCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'block';
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 3000);
+        }
+        
+        // タッチデバイスでのスクロール防止
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.classList.contains('writing-canvas')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchend', function(e) {
+            if (e.target.classList.contains('writing-canvas')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.classList.contains('writing-canvas')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
